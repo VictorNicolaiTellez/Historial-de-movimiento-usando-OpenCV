@@ -1,19 +1,13 @@
-# -*- coding: utf-8 -*-
-# stickman_pose_record.py
 # ---------------------------------------------------------------------------
-# Programa: captura vídeo por cámara, detecta pose con MediaPipe Pose,
-# dibuja un "stickman" simplificado en un canvas separado y guarda ese canvas
-# como un archivo de vídeo (stickman_output.avi). Además muestra en pantalla
-# el frame original con detección de movimiento y el stickman.
+# IMPORTACIONES
 # ---------------------------------------------------------------------------
-
 import cv2                      # OpenCV: captura vídeo, dibujo, lectura/escritura de archivos
 import mediapipe as mp          # MediaPipe: detección y seguimiento de pose humana
 import numpy as np              # Numpy: manejo eficiente de arrays y creación de canvas
 
 # --- Inicialización de utilidades de MediaPipe ---------------------
 mp_pose = mp.solutions.pose
-mp_drawing = mp.solutions.drawing_utils  # (no usado directamente para dibujo en este script)
+mp_drawing = mp.solutions.drawing_utils  
 
 # --- Inicializar cámara ---------------------------------------------------
 cap = cv2.VideoCapture(0)      # Abre la cámara por defecto (0). Cambiar si tienes varias cámaras.
@@ -52,16 +46,7 @@ def draw_stickman_from_landmarks(landmarks, canvas_size=(400, 600)):
     """
     Dibuja un stickman simplificado a partir de los 'landmarks' (puntos normalizados)
     devueltos por MediaPipe Pose.
-
-    Parámetros:
-      - landmarks: lista de objetos Landmark de MediaPipe (cada uno tiene .x y .y normalizados 0..1)
-                   o None si no hay detección.
-      - canvas_size: tupla (ancho, alto) del canvas donde se dibujará el stickman.
-                     Por defecto (400, 600). En el script principal se pasa (ancho_video, alto_video)
-                     para que coincida con la resolución de salida.
-
-    Retorna:
-      - canvas: imagen (numpy array) con fondo blanco y el stickman dibujado.
+    
     """
     canvas_w, canvas_h = canvas_size
     # Crear fondo blanco (3 canales BGR) del tamaño solicitado
@@ -148,7 +133,7 @@ def draw_stickman_from_landmarks(landmarks, canvas_size=(400, 600)):
 with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
 
     while cap.isOpened():
-        # ------------------ DETECCIÓN DE MOVIMIENTO (por diferencia de frames) --------------
+        # ------------------ DETECCIÓN DE MOVIMIENTO  --------------
         # Se calcula la diferencia absoluta entre frame1 y frame2 para detectar movimiento.
         diff = cv2.absdiff(frame1, frame2)
 
@@ -162,6 +147,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         _, thresh = cv2.threshold(blur, 25, 255, cv2.THRESH_BINARY)
 
         # Dilatar para rellenar huecos y agrupar regiones
+        # sirve para ampliar las áreas blancas (movimiento)
         dilated = cv2.dilate(thresh, None, iterations=3)
 
         # Encontrar contornos en la máscara de movimiento
@@ -171,7 +157,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         frame_out = frame1.copy()
         h_full, w_full = frame_out.shape[:2]
 
-        # ------------------ PROCESAR POSE (en el frame entero) -----------------------------
+        # ------------------ PROCESAR POSE  -----------------------------
         # MediaPipe espera imágenes en RGB
         frame_rgb = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB)
         results_full = pose.process(frame_rgb)  # procesar para obtener landmarks de pose
